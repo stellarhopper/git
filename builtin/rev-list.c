@@ -114,11 +114,13 @@ static void show_commit(struct commit *commit, void *data)
 
 	if (!revs->graph)
 		fputs(get_revision_mark(revs, commit), stdout);
-	if (revs->abbrev_commit && revs->abbrev)
-		fputs(find_unique_abbrev(&commit->object.oid, revs->abbrev),
-		      stdout);
-	else
-		fputs(oid_to_hex(&commit->object.oid), stdout);
+	if (revs->commit_format != CMIT_FMT_USERFORMAT) {
+		if (revs->abbrev_commit && revs->abbrev)
+			fputs(find_unique_abbrev(&commit->object.oid,
+			      revs->abbrev), stdout);
+		else
+			fputs(oid_to_hex(&commit->object.oid), stdout);
+	}
 	if (revs->print_parents) {
 		struct commit_list *parents = commit->parents;
 		while (parents) {
@@ -136,10 +138,12 @@ static void show_commit(struct commit *commit, void *data)
 		}
 	}
 	show_decorations(revs, commit);
-	if (revs->commit_format == CMIT_FMT_ONELINE)
-		putchar(' ');
-	else
-		putchar('\n');
+	if (revs->commit_format != CMIT_FMT_USERFORMAT) {
+		if (revs->commit_format == CMIT_FMT_ONELINE)
+			putchar(' ');
+		else
+			putchar('\n');
+	}
 
 	if (revs->verbose_header) {
 		struct strbuf buf = STRBUF_INIT;
@@ -507,7 +511,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (revs.commit_format != CMIT_FMT_UNSPECIFIED) {
 		/* The command line has a --pretty  */
 		info.hdr_termination = '\n';
-		if (revs.commit_format == CMIT_FMT_ONELINE)
+		if (revs.commit_format == CMIT_FMT_ONELINE ||
+				revs.commit_format == CMIT_FMT_USERFORMAT)
 			info.header_prefix = "";
 		else
 			info.header_prefix = "commit ";
